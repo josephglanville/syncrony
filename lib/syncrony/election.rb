@@ -1,3 +1,4 @@
+require 'syncrony'
 require 'celluloid'
 require 'etcd'
 
@@ -26,32 +27,42 @@ module Syncrony
       @client.connect
       @is_leader = false
       request_election
+      return
     end
 
-    def leader_duties
+    def become_leader
+      @is_leader = true
       @timer = every(@interval) do
         update
       end
     end
 
-    def step_down
-      @timer.cancel
-      @is_leader = false
+    # Stop being leader, or stop trying to become leader.
+    def cancel
+      @observer.cancel if @observer
+      # TODO race cdn here? Depends how Celluloid works. What if we're in the moddible of becoming leader?
+      if @is_leader
+        @timer.cancel
+        @is_leader = false
+        @client.delete(@path)
+      end
+      return
     end
 
     def request_election
-      puts "request election"
-      @sentinel = Time.now.to_i
-      if @client.update(@path, @sentinel, nil, :ttl => @ttl)
-        return true
-      else
-        
+      @observer = Syncrony::Observer.new(@client, @path)
+      @observer.run do |value, path, info|
+        if value.nil?
+          @sentinel = Time.now.to_i
+          if @client.update(@path, @sentinel, nil, :ttl => @ttl)
+            @observer.cancel
+            become_leader
+          end
+        end
       end
-      @is_leader = @client.update(@path, @sentinel, nil, :ttl => @ttl)
     end
 
     def update
-      puts "update"
       new_sentinel = Time.now.to_i
       if @client.update(@path, new_sentinel, @sentinel, :ttl => @ttl)
         @sentinel = new_sentinel
