@@ -1,6 +1,7 @@
 require 'syncrony'
 require 'celluloid'
 require 'etcd'
+require 'securerandom'
 
 module Syncrony
   class Election
@@ -20,6 +21,7 @@ module Syncrony
       @path = options[:path]
       @ttl = options[:ttl]
       @interval = options[:interval]
+      @identifier = options[:identifier] || SecureRandom.uuid
     end
 
     def run
@@ -53,8 +55,7 @@ module Syncrony
       @observer = Syncrony::Observer.new(@client, @path)
       @observer.run do |value, path, info|
         if value.nil?
-          @sentinel = Time.now.to_i
-          if @client.update(@path, @sentinel, nil, :ttl => @ttl)
+          if @client.update(@path, @identifier, nil, :ttl => @ttl)
             @observer.cancel
             become_leader
           end
@@ -63,10 +64,7 @@ module Syncrony
     end
 
     def update
-      new_sentinel = Time.now.to_i
-      if @client.update(@path, new_sentinel, @sentinel, :ttl => @ttl)
-        @sentinel = new_sentinel
-      else
+      if ! @client.update(@path, @identifier, @identifier, :ttl => @ttl)
         raise
       end
     end
