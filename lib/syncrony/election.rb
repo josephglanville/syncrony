@@ -55,7 +55,7 @@ module Syncrony
       @observer = Syncrony::Observer.new(@client, @path)
       @observer.run do |value, path, info|
         if value.nil?
-          if @client.update(@path, @identifier, nil, :ttl => @ttl)
+          if @client.set(@path, @identifier, :prevValue => nil, :ttl => @ttl)
             @observer.cancel
             become_leader
           end
@@ -64,9 +64,7 @@ module Syncrony
     end
 
     def update
-      if ! @client.update(@path, @identifier, @identifier, :ttl => @ttl)
-        raise
-      end
+      @client.set(@path, @identifier, :prevValue => @identifier, :ttl => @ttl)
     end
 
   end
