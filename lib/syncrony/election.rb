@@ -8,6 +8,7 @@ module Syncrony
     include Celluloid
 
     attr_accessor :is_leader
+    finalizer :cancel
 
     DEFAULT_OPTS = {
       server: { host: '127.0.0.1', port: 4001 },
