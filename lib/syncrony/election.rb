@@ -61,7 +61,7 @@ module Syncrony
                                ttl: @ttl)
             @observer.cancel
             become_leader
-          rescue Etcd::TestFailed
+          rescue Etcd::NodeExist
             # We lost the election race.
           end
         end
