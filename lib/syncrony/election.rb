@@ -19,6 +19,7 @@ module Syncrony
       options = DEFAULT_OPTS.merge(options)
       raise if not options[:path]
       @path = options[:path]
+      @servers = options[:servers]
       @ttl = options[:ttl]
       @interval = options[:interval]
       @identifier = options[:identifier] || SecureRandom.uuid
