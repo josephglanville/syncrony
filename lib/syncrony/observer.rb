@@ -13,18 +13,23 @@ module Syncrony
     end
 
     def run(&handler)
-      info = @client.info(@path)
-      value = info ? info[:value] : nil
-      index = info ? info[:index] : nil
+      begin
+        info = @client.get(@path)
+        value = info.value
+        index = info.etcd_index
+      rescue Etcd::KeyNotFound
+        info = nil
+        value = nil
+        index = nil
+      end
 
       yield value, @path, info
       
       while @running
-        @client.watch(@path, :index => index ? index + 1 : nil) do |w_value, w_key, w_info|
-          if @running
-            index = w_info[:index]
-            yield w_value, w_key, w_info
-          end
+        watch = @client.watch(@path, :index => index ? index + 1 : nil)
+        if @running
+          index = watch.etcd_index
+          yield watch.value, @path, watch
         end
       end
     end

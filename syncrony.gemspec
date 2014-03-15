@@ -25,5 +25,5 @@ Gem::Specification.new do |spec|
 
   # Runtime dependencies
   spec.add_runtime_dependency "celluloid"
-#  spec.add_runtime_dependency "etcd-rb", "~> 1.0.0.pre1"
+  spec.add_runtime_dependency "etcd"
 end
