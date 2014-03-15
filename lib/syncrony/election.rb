@@ -10,7 +10,7 @@ module Syncrony
     attr_accessor :is_leader
 
     DEFAULT_OPTS = {
-      :servers => ["127.0.0.1:4001"],
+      :servers => ["http://127.0.0.1:4001"],
       :ttl => 15,
       :interval => 5,
     }
